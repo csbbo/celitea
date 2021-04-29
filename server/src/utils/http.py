@@ -60,7 +60,7 @@ def get_sid(user):
     text += settings.HASH_SALT[::2]
     text += user['password']
     text += settings.HASH_SALT[::5]
-    text += str(user['secret'])
+    text += str(user.get('logout_time', ''))
     return hashlib.sha256(text.encode('utf-8')).hexdigest()[::2]
 
 
@@ -84,15 +84,31 @@ async def get_login_user(request) -> dict:
 
 
 class check():
-    def __init__(self, *, login_required=True, validate=None):
+    def __init__(self, permission=None, *, login_required=True, validate=None):
+        self.permission = permission
         self.login_required = login_required
         self.validate = validate
 
-    async def validate_user(self, request):
+        if permission and not login_required:
+            raise ValueError("invalid check condition")
+
+    async def _validate_user(self, request):
         user = await get_login_user(request)
         if not user:
             return None
         return user
+
+    def _check_permission(self, user_type):
+        if self.permission == '__all__':
+            return True
+
+        if isinstance(self.permission, int):
+            if user_type >= self.permission:
+                return True
+        else:
+            if user_type in self.permission:
+                return True
+        return False
 
     def __call__(self, func):
         @functools.wraps(func)
@@ -101,10 +117,13 @@ class check():
             request = func_self.request
 
             if self.login_required:
-                ret = await self.validate_user(request)
+                ret = await self._validate_user(request)
                 if ret is None:
                     return func_self.error(func_self.i18n.login_required)
                 func_self.request_user = ret
+
+                if not self._check_permission(ret.get('user_type')):
+                    return func.error(func_self.i18n.permission_denied)
 
             if self.validate:
                 if request.method == 'GET':

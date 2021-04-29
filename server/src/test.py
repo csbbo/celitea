@@ -17,6 +17,13 @@ from utils.shortcuts import hash_pass
 logger = logging.getLogger(__name__)
 
 
+"""
+单元测试设计：
+用一个子进程去拉起一个测试服务，再用requests去模拟接口请求。
+每一个测试Class结束后都会清掉mongodb中的数据
+"""
+
+
 HTTP_PORT = settings.HTTP_PORT + 1
 MONGODB_ADDR = settings.MONGODB_ADDR + '_test'
 
@@ -130,7 +137,7 @@ def detection_and_run_test():
             continue
         pprint(f'\n[modul {item}]', color='light_yellow')
         classes = inspect.getmembers(tests, lambda x: inspect.isclass(x) and x.__name__.endswith('APITest'))
-        classes.reverse()
+        # classes.reverse()
         for name, _class in classes:
             pprint(f'[Test Class: {name}]', color='yellow')
             test_func_list = list(filter(lambda x: x.endswith('_test'), dir(_class)))
@@ -139,6 +146,7 @@ def detection_and_run_test():
             try:
                 obj.setup()
                 for test_func in test_func_list:
+                    pprint(test_func, color='blue')
                     is_success = getattr(obj, test_func)()
                     if not is_success:
                         fail_test_count += 1
@@ -146,6 +154,7 @@ def detection_and_run_test():
             except Exception as e:
                 logger.exception(e)
             finally:
+                obj.clear_db()  # 每个测试class结束后清空环境
                 all_test_count += 1
 
     pprint(f'\nRan {all_test_count} tests in {round(time.time()-start_time, 2)}s')
@@ -164,7 +173,7 @@ if __name__ == '__main__':
     pprint(f'Running test server on {settings.HTTP_LISTEN}:{HTTP_PORT}')
     db_name = MONGODB_ADDR.rsplit('/', 1)[1]
     pprint(f'Create test database {db_name}')
-    time.sleep(0.5)
+    time.sleep(1)   # 加一个延时让测试服务有足够时间跑起来
 
     # run unit test
     try:

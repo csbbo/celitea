@@ -1,25 +1,41 @@
 from utils import filters as f
 
 
-register_validator = {
-    'username': [f.required, f.not_empty],
-    'password': [f.required, f.not_empty]
+EmailCaptchaValidator = {
+    'email': [f.email]
+}
+
+RegisterValidator = {
+    'username': [],
+    'password': [],
+    'email': [f.email],
+    'captcha': [],
 }
 
 
-login_validator = {
-    'username': [f.required, f.not_empty],
-    'password': [f.required, f.not_empty]
+LoginValidator = {
+    'username': [],
+    'password': []
 }
 
 
-user_get_validator = {
-    'tags': [f.required],
-    'name': [f.required]
-}
+ProfilePostValidator = {
+    'username': [f.not_required],
 
+    'email': [f.not_required, f.email],
+    'phone': [f.not_required, f.phone],
+    'remark': [f.not_required],
+    'avatar': [f.not_required],
 
-user_get_validator = {
-    'username': [f.required, f.not_empty],
-    'password': [f.required, f.not_empty]
+    'number': [f.not_required],
+    'sex': [f.not_required],
+    'wechat': [f.not_required],
+    'qq': [f.not_required],
+    'github': [f.not_required],
+    'blog': [f.not_required],
+    'birthday': [f.not_required],
+    'grade': [f.not_required],
+    'major': [f.not_required],
+    'company': [f.not_required],
+    'location': [f.not_required],
 }
