@@ -140,3 +140,7 @@ cython_debug/
 .idea/
 .DS_Store
 .vscode
+
+#for quick deploy in deploy dir
+deploy/db_data
+deploy/images

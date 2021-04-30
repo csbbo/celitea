@@ -1,4 +1,4 @@
 #! /bin/bash
 
-certbot --nginx -d shaobo.fun
+certbot --nginx -d domain.com
 #certbot renew

@@ -6,7 +6,8 @@ services:
     restart: always
     volumes:
       - "./db_data/mongo:/data/db"
-      # - "./data/mongo-entrypoint:/docker-entrypoint-initdb.d"
+      - "./db_data/mongodb_dump:/root/dump"
+      - "./images:/static/images"
   redis:
     image: redis:6.0-alpine
     container_name: clt_redis
@@ -26,6 +27,8 @@ services:
     image: clt_nginx:latest
     container_name: clt_nginx
     restart: always
+    volumes:
+      - "./images:/web/static/images"
     ports:
       - 80:80
       - 443:443

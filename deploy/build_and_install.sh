@@ -8,7 +8,7 @@ command -v docker-compose > /dev/null && echo "docker-compose found" || { echo "
 
 echo "------------clean remain env------------"
 if [[ $(docker ps | grep clt_) != "" ]]; then
-  docker-compose -p message_guest -f docker-compose.yml down
+  docker-compose -p celitea -f docker-compose.yml down
 fi
 if [[ $(docker images | grep clt_ | awk '{print $1}') != "" ]]; then
   docker image rm $(docker images | grep clt_ | awk '{print $1}')
@@ -27,9 +27,11 @@ echo "------------build server------------"
 docker build -t clt_server ../server
 
 export HTTP_PORT='8000'
-export MONGODB_ADDR='mongodb://clt_mongo:27017/guest_book'
+export MONGODB_ADDR='mongodb://clt_mongo:27017/clt'
 export REDIS_ADDR='redis://clt_redis:6379/0'
-docker-compose -p message_guest -f docker-compose.yml up -d
+
+export AVATAR_PATH='/static/images/avatars'
+docker-compose -p celitea -f docker-compose.yml up -d
 
 end=$(date +%s)
 echo "TOTAL SPEND TIME: "$(expr $end - $start)" seconds"

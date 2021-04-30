@@ -9,6 +9,7 @@ import logging
 from functools import partial
 
 import aioredis
+import pymongo
 import socketio
 from aiohttp import web
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -34,6 +35,13 @@ async def setup_app(app):
 
     redis = await aioredis.create_redis_pool(settings.REDIS_ADDR)
     app['redis'] = redis
+
+    db = app['db']
+    # users
+    await db.users.create_index([("username", pymongo.ASCENDING)], unique=True)
+    await db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
+    await db.users.create_index([("phone", pymongo.ASCENDING)], unique=True)
+    await db.users.create_index([("number", pymongo.ASCENDING)], unique=True)
 
 
 def create_app(loop):
