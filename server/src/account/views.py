@@ -16,7 +16,7 @@ class EmailCaptchaAPI(APIView):
     @check(login_required=False, validate=EmailCaptchaValidator)
     async def post(self):
         email = self.request_data['email']
-        captcha = await self.redis.get(f'{email}email_captcha')
+        captcha = await self.redis.get(f'{email}_captcha')
         if captcha:
             return self.error(self.i18n.email_already_send)
 
