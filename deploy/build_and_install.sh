@@ -26,7 +26,6 @@ docker build -t clt_nginx ../nginx
 echo "------------build server------------"
 docker build -t clt_server ../server
 
-export HTTP_PORT='8000'
 export MONGODB_ADDR='mongodb://clt_mongo:27017/clt'
 export REDIS_ADDR='redis://clt_redis:6379/0'
 

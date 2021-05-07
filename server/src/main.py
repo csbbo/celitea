@@ -21,7 +21,16 @@ from utils.http import APIView
 logger = logging.getLogger(__name__)
 
 
+async def create_index(db):
+    # users
+    await db.users.create_index([("username", pymongo.ASCENDING)], unique=True)
+    await db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
+    await db.users.create_index([("phone", pymongo.ASCENDING)], unique=True)
+    await db.users.create_index([("number", pymongo.ASCENDING)], unique=True)
+
+
 async def setup_app(app):
+    # setup API
     for item in settings.INSTALLED_APPS:
         try:
             views = importlib.import_module(item + '.views')
@@ -33,28 +42,30 @@ async def setup_app(app):
             app.router.add_route(method='*', path=path, handler=_class)
             logger.info(f'Detected {name}, url: {path}')
 
-    redis = await aioredis.create_redis_pool(settings.REDIS_ADDR)
-    app['redis'] = redis
-
-    db = app['db']
-    # users
-    await db.users.create_index([("username", pymongo.ASCENDING)], unique=True)
-    await db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
-    await db.users.create_index([("phone", pymongo.ASCENDING)], unique=True)
-    await db.users.create_index([("number", pymongo.ASCENDING)], unique=True)
-
-
-def create_app(loop):
-    app = web.Application(middlewares=settings.MIDDLEWARES, client_max_size=(1024 ** 2) * 10)
-
+    # setup mongodb
     db_client = AsyncIOMotorClient(settings.MONGODB_ADDR, serverSelectionTimeoutMS=3000)
     db = db_client.get_database(codec_options=CodecOptions(tz_aware=True))
+    await create_index(db)
     app['db'] = db
 
+    # setup socket
     sio = socketio.AsyncServer(engineio_logger=False)
     sio.attach(app)
     app['sio'] = sio
 
+    # setup redis
+    redis = await aioredis.create_redis_pool(settings.REDIS_ADDR)
+    app['redis'] = redis
+
+
+async def application():   # for multiple processes concurrent called in gunicorn
+    app = web.Application(middlewares=settings.MIDDLEWARES, client_max_size=(1024 ** 2) * 10)
+    await setup_app(app)
+    return app
+
+
+def create_app(loop):
+    app = web.Application(middlewares=settings.MIDDLEWARES, client_max_size=(1024 ** 2) * 10)
     loop.run_until_complete(setup_app(app))
     return app
 
