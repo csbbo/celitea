@@ -1,8 +1,10 @@
 # Celitea
 
 ### requirment
-- docker
-- docker-compose
+- docker >= 19.03.8
+- docker-compose >= 1.25.5
+
+> There is no strictly limited version, as long as it is not too old
 
 ### run
 ```shell script
