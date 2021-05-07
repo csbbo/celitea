@@ -64,12 +64,11 @@ def rand_str(length=16, char_type='lower_str'):
     return ''.join(random.choice('1234567890qwertyuiopasdfghjklzxcvbnm') for _ in range(length))
 
 
-def _format_addr(s):
-    name, addr = parseaddr(s)
-    return formataddr((Header(name, 'utf-8').encode(), addr))
-
-
 async def send_html_email(to_list, subject, html) -> bool:
+    def _format_addr(s):
+        name, addr = parseaddr(s)
+        return formataddr((Header(name, 'utf-8').encode(), addr))
+
     msg = MIMEText(html, 'html', 'utf-8')
     msg['From'] = _format_addr('Celitea <%s>' % settings.EMAIL_SENDER)
     msg['To'] = ';'.join([_format_addr('亲爱的用户 <%s>' % addr) for addr in to_list])
