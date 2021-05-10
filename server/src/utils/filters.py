@@ -9,27 +9,25 @@ def validate(validator, data):
     :param data: request data
     :return: request data after parsing or error string
     """
-    ret = {}
+    params = {}
     if isinstance(data, MultiDictProxy):    # GET请求数据
         for key in data:
-            ret[key] = data.getall(key) if key in ret else data.get(key)
-        data = ret
+            params[key] = data.get(key) if key not in params else data.getall(key)
+        data = params
     for key, func_list in validator.items():
-        item = data.get(key)
-        if not_required in func_list:
-            func_list.remove(not_required)
-        elif item is None:
+        content = data.get(key)
+        if not_required not in func_list and content is None:
             return f'{key} is required'
 
-        item.strip()
-        if allow_empty in func_list:
-            func_list.remove(allow_empty)
-        elif item == '':
+        content.strip()
+        if allow_empty not in func_list and content == '':
             return f'{key} can not be empty'
 
-        if item:
+        if content:
             for f in func_list:
-                if err := f(key, item):
+                if not callable(f):
+                    continue
+                if err := f(key, content):
                     return err
     return data
 
