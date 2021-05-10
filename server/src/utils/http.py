@@ -1,6 +1,7 @@
 import functools
 import hashlib
 import json
+import logging
 import typing
 
 import bson
@@ -8,6 +9,8 @@ from aiohttp import web
 
 import settings
 from utils import filters, i18n
+
+logger = logging.getLogger(__name__)
 
 
 class Encoder(json.JSONEncoder):
@@ -92,12 +95,6 @@ class check():
         if permission and not login_required:
             raise ValueError("invalid check condition")
 
-    async def _validate_user(self, request):
-        user = await get_login_user(request)
-        if not user:
-            return None
-        return user
-
     def _check_permission(self, user_type):
         if self.permission == '__all__':
             return True
@@ -117,27 +114,28 @@ class check():
             request = func_self.request
 
             if self.login_required:
-                ret = await self._validate_user(request)
-                if ret is None:
+                user = await get_login_user(request)
+                if not user:
                     return func_self.error(func_self.i18n.login_required)
-                func_self.request_user = ret
+                func_self.request_user = user
 
-                if not self._check_permission(ret.get('user_type')):
+                if not self._check_permission(user.get('user_type')):
                     return func.error(func_self.i18n.permission_denied)
 
             if self.validate:
                 if request.method == 'GET':
-                    data = request.rel_url.query
+                    request_data = request.rel_url.query
                 else:
                     try:
-                        data = await request.json()
-                    except:
-                        print(request.content_type)
+                        request_data = await request.json()
+                    except Exception as e:
+                        logger.error(str(e))
                         return func_self.error('unknown data type')
-                ret = filters.validate(self.validate, data)
-                if not isinstance(ret, dict):
-                    return func_self.error(ret)
-                func_self.request_data = ret
+
+                data = filters.validate(self.validate, request_data)
+                if not isinstance(data, dict):
+                    return func_self.error(data)
+                func_self.request_data = data
 
             return await func(*args, **kw)
         return wrapper
